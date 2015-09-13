@@ -15,16 +15,16 @@ function loadXls(fileList) {
 			console.log('打开文件出错');
 			return;
 		}
-		obj.forEach(function(sheet, i) {
-			if (sheet.data && IGNORE_INDEXES.indexOf(i) == -1) {
-				if (!result[i])
-					result[i] = {
+		obj.forEach(function(sheet) {
+			if (sheet.data) {
+				if (!sheetsMap[sheet.name])
+					sheetsMap[sheet.name] = {
 						'name': sheet.name,
 						'data': []
 					};
 				sheet.data.forEach(function(item) {
 					if (item && !isNaN(item[0])) {
-						result[i].data.push(item);
+						sheetsMap[sheet.name].data.push(item);
 					}
 				});
 			}
@@ -32,22 +32,24 @@ function loadXls(fileList) {
 	});
 }
 
-// fs.writeFile(__dirname + '/data.json', JSON.stringify(result), 'utf-8');
-
 function saveResult(result) {
 	console.log('正在合并...');
-	var file = xlsx.build(result);
-	fs.writeFileSync(path.join(DIST_PATH, 'result.xlsx'), file, 'binary');
-
-	// result.forEach(function(sheet, index) {
-	// 	if (!sheet)
-	// 		return;
-	// 	var file = xlsx.build([result[index]]);
-	// 	console.log('正在合并' + result[index].name + '...');
-	// 	fs.writeFile(path.join(DIST_PATH, result[index].name + '.xlsx'), file, 'binary', function(e) {
-	// 		console.log(result[index].name + '合并完毕');
-	// 	});
+	// IGNORE_INDEXES.forEach(function(index) {
+	// 	delete result[index];
 	// });
+	// var file = xlsx.build(result);
+	// fs.writeFileSync(path.join(DIST_PATH, 'result.xlsx'), file, 'binary');
+	// fs.writeFile(path.join(__dirname, 'data.json'), JSON.stringify(result), 'utf-8');
+
+	result.forEach(function(sheet, index) {
+		if (!sheet)
+			return;
+		var file = xlsx.build([result[index]]);
+		console.log('正在合并' + result[index].name + '...');
+		fs.writeFile(path.join(DIST_PATH, result[index].name + '.xlsx'), file, 'binary', function(e) {
+			console.log(result[index].name + '合并完毕');
+		});
+	});
 }
 
 // Main process
@@ -67,6 +69,7 @@ if (fs.existsSync(DIST_PATH)) {
 
 var srcDir = fs.readdirSync(SRC_PATH);
 var fileList = [],
+	sheetsMap = {},
 	result = [];
 srcDir.forEach(function(item) {
 	if (/^[^\.~]*.\.xlsx$/.test(item)) {
@@ -76,6 +79,9 @@ srcDir.forEach(function(item) {
 
 console.log('正在处理，请稍后...');
 loadXls(fileList);
+for(var key in sheetsMap) {
+	result.push(sheetsMap[key]);
+}
 saveResult(result);
 console.log('合并完毕');
 
