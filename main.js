@@ -22,8 +22,10 @@ function loadXls(fileList) {
 						'name': sheet.name,
 						'data': []
 					};
-				sheet.data.forEach(function(item) {
-					if (item && !isNaN(item[0])) {
+				sheet.data.forEach(function(item, i) {
+					// if (item && !isNaN(item[0])) {
+					if ((i < 3 && sheetsMap[sheet.name].data.length <= 3) ||
+						(i >= 3 && item && item[0])) {
 						sheetsMap[sheet.name].data.push(item);
 					}
 				});
